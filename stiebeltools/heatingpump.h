@@ -138,7 +138,7 @@ void readSignal(const CanMember *member, const ElsterIndex *ei)
 {
     bool use_extended_id = 0; // No use of extended ID
     uint8_t IndexByte1 = (uint8_t)(ei->Index >> 8);
-    uint8_t IndexByte2 = (uint8_t)(ei->Index - ((ei->Index >> 8) << 8));
+    uint8_t IndexByte2 = (uint8_t)(ei->Index & 0xFF);
     std::vector<uint8_t> data;
 
     if (IndexByte1 == 0x00)
@@ -163,7 +163,7 @@ void readSignal(const CanMember *member, const ElsterIndex *ei)
     }
 
     char logmsg[255];
-    sprintf(logmsg, "READ \"%s\" (0x%04x) FROM %s (0x%02x {0x%02x, 0x%02x}): %02x, %02x, %02x, %02x, %02x, %02x, %02x", ei->EnglishName, ei->Index, member->Name, member->CanId, member->ReadId[0], member->ReadId[1], data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+    snprintf(logmsg, "READ \"%s\" (0x%04x) FROM %s (0x%02x {0x%02x, 0x%02x}): %02x, %02x, %02x, %02x, %02x, %02x, %02x", ei->EnglishName, ei->Index, member->Name, member->CanId, member->ReadId[0], member->ReadId[1], data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
     ESP_LOGI("readSignal()", "%s", logmsg);
 
     id(my_mcp2515).send_data(CanMembers[cm_espclient].CanId, use_extended_id, data);
@@ -176,7 +176,7 @@ void writeSignal(const CanMember *member, const ElsterIndex *ei, const char *&st
     bool use_extended_id = 0; // No use of extended ID
     int writeValue = TranslateString(str, ei->Type);
     uint8_t IndexByte1 = (uint8_t)(ei->Index >> 8);
-    uint8_t IndexByte2 = (uint8_t)(ei->Index - ((ei->Index >> 8) << 8));
+    uint8_t IndexByte2 = (uint8_t)(ei->Index & 0xFF));
     std::vector<uint8_t> data;
 
     if (IndexByte1 == 0x00)
@@ -185,7 +185,7 @@ void writeSignal(const CanMember *member, const ElsterIndex *ei, const char *&st
                                  member->WriteId[1],
                                  IndexByte2,
                                  ((uint8_t)(writeValue >> 8)),
-                                 ((uint8_t)(writeValue - ((writeValue >> 8) << 8))),
+                                 ((uint8_t)(writeValue & 0xFF)),
                                  0x00,
                                  0x00});
     }
@@ -197,12 +197,10 @@ void writeSignal(const CanMember *member, const ElsterIndex *ei, const char *&st
                                  IndexByte1,
                                  IndexByte2,
                                  ((uint8_t)(writeValue >> 8)),
-                                 ((uint8_t)(writeValue - ((writeValue >> 8) << 8)))});
+                                 ((uint8_t)(writeValue & 0xFF))});
     }
 
-    char logmsg[120];
-    sprintf(logmsg, "WRITE \"%s\" (0x%04x): \"%d\" TO: %s (0x%02x {0x%02x, 0x%02x}): %02x, %02x, %02x, %02x, %02x, %02x, %02x", ei->Name, ei->Index, writeValue, member->Name, member->CanId, member->ReadId[0], member->ReadId[1], data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
-    ESP_LOGI("writeSignal()", "%s", logmsg);
+    ESP_LOGI("writeSignal()", "WRITE \"%s\" (0x%04x): \"%d\" TO: %s (0x%02x {0x%02x, 0x%02x}): %02x, %02x, %02x, %02x, %02x, %02x, %02x", ei->Name, ei->Index, writeValue, member->Name, member->CanId, member->ReadId[0], member->ReadId[1], data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
 
     id(my_mcp2515).send_data(CanMembers[cm_espclient].CanId, use_extended_id, data);
 
